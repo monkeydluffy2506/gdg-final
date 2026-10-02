@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GDG // SOCIETY OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Instrument+Sans:wght@400;500&display=swap" rel="stylesheet">
+<script>try{var __t=localStorage.getItem("gdg-theme");if(__t)document.documentElement.setAttribute("data-theme",__t)}catch(e){}</script>
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --void: #020202;
+    --bone: #f1efec;
+    --dim: rgba(241, 239, 236, 0.6);
+    --signal: #ff2b2b;
+    --line: rgba(255, 255, 255, 0.12);
+    --glass: rgba(255, 255, 255, 0.05);
+    --display: "Unbounded", "Arial Black", system-ui, sans-serif;
+    --body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: dark;
+    --fill: rgba(255, 255, 255, 0.04);
+    --fill2: rgba(255, 255, 255, 0.07);
+    --mute: rgba(241, 239, 236, 0.4);
+    --ghost: rgba(241, 239, 236, 0.18);
+  }
+  :root[data-theme="dark"] { color-scheme: dark; }
+  :root[data-theme="light"] {
+    --void: #f5f3ef; --bone: #121212; --dim: rgba(18, 18, 18, 0.64); --signal: #e11d1d;
+    --line: rgba(0, 0, 0, 0.13); --glass: rgba(255, 255, 255, 0.6);
+    --fill: rgba(0, 0, 0, 0.04); --fill2: rgba(0, 0, 0, 0.06); --mute: rgba(18, 18, 18, 0.46); --ghost: rgba(18, 18, 18, 0.2);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+    --void: #f5f3ef; --bone: #121212; --dim: rgba(18, 18, 18, 0.64); --signal: #e11d1d;
+    --line: rgba(0, 0, 0, 0.13); --glass: rgba(255, 255, 255, 0.6);
+    --fill: rgba(0, 0, 0, 0.04); --fill2: rgba(0, 0, 0, 0.06); --mute: rgba(18, 18, 18, 0.46); --ghost: rgba(18, 18, 18, 0.2);
+    color-scheme: light;
+    }
+  }
+
+  html { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 90px); }
+  *, *::before, *::after { box-sizing: inherit; margin: 0; padding: 0; }
+  body {
+    background: var(--void);
+    color: var(--bone);
+    font-family: var(--body);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  a { color: inherit; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+
+  .glass {
+    background: var(--glass);
+    border: 1px solid var(--line);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
+  }
+
+  /* ───────── film ───────── */
+  #track { height: 800vh; position: relative; }
+  #stage { position: sticky; top: 0; height: 100vh; width: 100%; overflow: hidden; }
+  #glow {
+    position: absolute; inset: 0; z-index: 0; opacity: 0.2;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 43, 43, 0.5), transparent 52%);
+  }
+  #gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 1; }
+  #stage::after {
+    content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: radial-gradient(ellipse 75% 75% at 50% 50%, transparent 45%, var(--void) 100%);
+  }
+  #nogl { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; color: var(--dim); text-align: center; padding: 24px; }
+  #nogl[hidden] { display: none; }
+
+  .caption {
+    position: absolute; z-index: 3; opacity: 0; visibility: hidden;
+    display: flex; flex-direction: column; justify-content: center;
+    pointer-events: none; will-change: opacity, transform;
+    transform: translateY(var(--d, 0px));
+  }
+  .caption h1 { font-family: var(--display); font-weight: 700; font-size: clamp(34px, 6.4vw, 92px); line-height: 1.02; letter-spacing: -0.03em; }
+  .caption h2 { font-family: var(--display); font-weight: 700; font-size: clamp(26px, 3.8vw, 54px); line-height: 1.08; letter-spacing: -0.025em; }
+  .caption p { margin-top: 16px; color: var(--dim); font-size: clamp(15px, 1.35vw, 19px); line-height: 1.55; max-width: 34ch; }
+  .cap-center { inset: 0; align-items: center; text-align: center; padding: 0 6vw; }
+  .cap-center p { margin-inline: auto; }
+  .cap-left { inset: 0 auto 0 6vw; width: min(46vw, 560px); }
+  .cap-right { inset: 0 6vw 0 auto; width: min(46vw, 560px); text-align: right; align-items: flex-end; }
+  .cap-bottom { inset: 0; justify-content: flex-end; align-items: center; text-align: center; padding: 0 6vw 9vh; }
+  .cap-bottom p { margin-inline: auto; }
+  .caption .btn { pointer-events: auto; }
+  @media (max-width: 800px) {
+    .cap-left, .cap-right { inset: 0 6vw; width: auto; justify-content: flex-end; padding-bottom: 14vh; text-align: left; align-items: flex-start; }
+  }
+
+  .btn {
+    display: inline-block; margin-top: 28px; padding: 14px 30px; border-radius: 999px;
+    background: var(--signal); color: #fff; text-decoration: none; border: 0; cursor: pointer;
+    font-family: var(--body); font-weight: 500; font-size: 15px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: 0 0 0 rgba(255, 43, 43, 0);
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(255, 43, 43, 0.45); }
+  .btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--bone); }
+  .btn.ghost:hover { box-shadow: none; border-color: var(--signal); }
+
+  #cue {
+    position: absolute; z-index: 3; left: 50%; bottom: 4vh; transform: translateX(-50%);
+    color: var(--dim); font-size: 13px; transition: opacity 0.4s ease; text-align: center;
+  }
+  #cue::after { content: ""; display: block; width: 1px; height: 34px; margin: 10px auto 0; background: linear-gradient(var(--signal), transparent); }
+
+  #hud {
+    position: absolute; z-index: 3; left: 50%; bottom: 6vh; margin-left: calc(min(560px, 88vw) / -2);
+    width: min(560px, 88vw); padding: 18px 22px; border-radius: 20px;
+    opacity: 0; visibility: hidden;
+  }
+  #hud h3 { font-family: var(--display); font-weight: 700; font-size: 20px; letter-spacing: -0.02em; }
+  #hud p { margin-top: 6px; color: var(--dim); font-size: 15px; line-height: 1.5; }
+  #hud .row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  #hud .count { color: var(--signal); font-family: var(--display); font-size: 13px; }
+  #ticks { display: flex; gap: 6px; margin-top: 14px; }
+  #ticks i { flex: 1; height: 3px; border-radius: 2px; background: var(--line); transition: background 0.3s ease; }
+  #ticks i.on { background: var(--signal); }
+
+  /* ───────── nav ───────── */
+  #nav {
+    position: fixed; z-index: 80; left: 14px; right: 70px; top: calc(env(safe-area-inset-top, 0px) + 12px);
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 10px 12px 10px 22px; border-radius: 999px;
+    opacity: 0; visibility: hidden; transform: translateY(-10px);
+    transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s;
+  }
+  #nav.on { opacity: 1; visibility: visible; transform: none; }
+  #nav .mark { font-family: var(--display); font-weight: 700; font-size: 13px; letter-spacing: -0.01em; text-decoration: none; white-space: nowrap; }
+  #nav .links { display: flex; gap: 28px; }
+  #nav .links a { color: var(--dim); text-decoration: none; font-size: 14px; transition: color 0.2s; }
+  #nav .links a:hover { color: var(--bone); }
+  #nav .btn { margin: 0; padding: 9px 20px; font-size: 14px; }
+  @media (max-width: 700px) { #nav .links { display: none; } }
+
+  /* ───────── brand page ───────── */
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 14vh 6vw; }
+  .sec-title { font-family: var(--display); font-weight: 700; font-size: clamp(28px, 4vw, 56px); line-height: 1.06; letter-spacing: -0.03em; max-width: 14ch; }
+  .lead { color: var(--dim); font-size: clamp(15px, 1.3vw, 18px); line-height: 1.65; max-width: 46ch; margin-top: 18px; }
+
+  #manifesto .wrap { padding-top: 22vh; padding-bottom: 20vh; }
+  #manifesto p.big { font-family: var(--display); font-weight: 500; font-size: clamp(24px, 4.2vw, 60px); line-height: 1.2; letter-spacing: -0.03em; max-width: 22ch; }
+  #manifesto .w { color: var(--ghost); transition: color 0.3s ease; }
+  #manifesto .w.lit { color: var(--bone); }
+
+  .filters { margin-top: 6vh; display: flex; flex-wrap: wrap; gap: 10px; }
+  .chip {
+    font: inherit; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
+    color: var(--dim); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 11px 22px;
+    transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+  }
+  .chip:hover { border-color: var(--mute); color: var(--bone); }
+  .chip.on { background: var(--bone); color: var(--void); border-color: var(--bone); }
+  .soc-grid { margin-top: 4vh; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; align-items: start; }
+  @media (max-width: 1100px) { .soc-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 700px) { .soc-grid { grid-template-columns: 1fr; } }
+  .soc {
+    position: relative; overflow: hidden; border-radius: 22px; padding: 26px; min-height: 300px;
+    display: flex; flex-direction: column; cursor: pointer; --mx: 50%; --my: 50%;
+    transition: border-color 0.3s ease;
+  }
+  .soc::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s ease;
+    background: radial-gradient(260px circle at var(--mx) var(--my), rgba(255, 43, 43, 0.28), transparent 70%);
+  }
+  .soc:hover::before, .soc.open::before { opacity: 1; }
+  .soc:hover, .soc.open { border-color: rgba(255, 43, 43, 0.5); }
+  .soc > * { position: relative; }
+  .soc .top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .soc .ico { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; background: var(--fill2); border: 1px solid var(--line); font-size: 17px; }
+  .soc .idx, .soc .cat, .soc .open-n { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; }
+  .soc .idx { color: var(--mute); }
+  .soc .cat { margin-top: 28px; color: var(--signal); }
+  .soc h3 { margin-top: 10px; font-family: var(--display); font-weight: 700; font-size: 19px; line-height: 1.25; letter-spacing: -0.02em; }
+  .soc .tag { margin-top: 10px; color: var(--dim); font-size: 15px; line-height: 1.5; }
+  .soc .more { display: none; margin-top: 18px; }
+  .soc.open .more { display: block; }
+  .soc .roles { list-style: none; display: grid; gap: 8px; color: var(--bone); font-size: 14px; }
+  .soc .roles li { padding: 9px 0; border-top: 1px solid var(--line); }
+  .soc .more .btn { margin-top: 16px; padding: 11px 22px; font-size: 14px; }
+  .soc .foot { margin-top: auto; padding-top: 22px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); }
+  .soc .open-n { color: var(--mute); }
+  .soc .explore { font: inherit; font-weight: 500; font-size: 14px; color: var(--bone); background: none; border: 0; cursor: pointer; padding: 4px 0; }
+
+  .steps { margin-top: 7vh; display: grid; grid-template-columns: repeat(5, 1fr); border-radius: 22px; overflow: hidden; }
+  .step { padding: 28px 22px 34px; border-right: 1px solid var(--line); }
+  .step:last-child { border-right: 0; }
+  .step .n { font-family: var(--display); font-size: 13px; color: var(--signal); }
+  .step h3 { margin-top: 38px; font-family: var(--display); font-size: 17px; letter-spacing: -0.02em; }
+  .step p { margin-top: 10px; color: var(--dim); font-size: 14px; line-height: 1.55; }
+  @media (max-width: 900px) {
+    .steps { grid-template-columns: 1fr; }
+    .step { border-right: 0; border-bottom: 1px solid var(--line); }
+    .step:last-child { border-bottom: 0; }
+    .step h3 { margin-top: 14px; }
+  }
+
+  .quiz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6vw; align-items: center; }
+  @media (max-width: 900px) { .quiz-grid { grid-template-columns: 1fr; } }
+  #quiz-box { border-radius: 28px; padding: clamp(24px, 3vw, 40px); min-height: 380px; display: flex; flex-direction: column; }
+  #quiz-box .prog { color: var(--signal); font-family: var(--display); font-size: 12px; }
+  #quiz-box h3 { margin-top: 14px; font-family: var(--display); font-weight: 700; font-size: clamp(20px, 2vw, 26px); line-height: 1.2; letter-spacing: -0.02em; }
+  #quiz-box .opts { margin-top: 24px; display: grid; gap: 10px; }
+  #quiz-box .opt {
+    text-align: left; font: inherit; color: var(--bone); cursor: pointer;
+    background: var(--fill); border: 1px solid var(--line); border-radius: 14px; padding: 15px 18px;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  #quiz-box .opt:hover { border-color: var(--signal); background: rgba(255, 43, 43, 0.1); }
+  #quiz-box .res-name { margin-top: 14px; font-family: var(--display); font-weight: 700; font-size: clamp(30px, 4vw, 52px); letter-spacing: -0.03em; }
+  #quiz-box .res-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+
+  #apply { text-align: center; }
+  #apply .wrap { max-width: 760px; padding-top: 16vh; padding-bottom: 18vh; }
+  #apply .sec-title { max-width: none; margin: 0 auto; font-size: clamp(30px, 5vw, 64px); }
+  .app-head .kick { margin-top: 22px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12px; letter-spacing: 0.2em; color: var(--dim); text-transform: uppercase; }
+  .bars { display: flex; gap: 10px; justify-content: center; margin-top: 16px; }
+  .bars i { width: 34px; height: 3px; border-radius: 2px; background: var(--line); transition: background 0.3s ease; }
+  .bars i.on { background: var(--signal); }
+  #form { margin-top: 36px; border-radius: 28px; padding: clamp(24px, 4vw, 44px); text-align: left; }
+  #form .step-n { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; color: var(--dim); }
+  #form h3 { margin-top: 8px; font-family: var(--display); font-weight: 700; font-size: clamp(22px, 3vw, 30px); letter-spacing: -0.02em; }
+  #form .hint { margin-top: 10px; color: var(--dim); font-size: 15px; line-height: 1.5; }
+  .field { margin-top: 22px; display: grid; gap: 8px; }
+  .field label { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
+  .field input, .field select, .field textarea {
+    width: 100%; font: inherit; color: var(--bone); background: var(--fill);
+    border: 1px solid var(--line); border-radius: 14px; padding: 15px 18px;
+  }
+  .field textarea { min-height: 140px; resize: vertical; line-height: 1.5; }
+  .field select option { background: var(--void); color: var(--bone); }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--signal); box-shadow: 0 0 0 3px rgba(255, 43, 43, 0.25); }
+  .picks { margin-top: 22px; display: grid; gap: 10px; }
+  .pick {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; text-align: left; cursor: pointer;
+    font: inherit; color: var(--bone); background: var(--fill); border: 1px solid var(--line); border-radius: 14px; padding: 15px 18px;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .pick small { color: var(--dim); font-size: 13px; }
+  .pick:hover { border-color: rgba(255, 43, 43, 0.6); }
+  .pick[aria-pressed="true"] { border-color: var(--signal); background: rgba(255, 43, 43, 0.14); }
+  .err { margin-top: 18px; min-height: 20px; color: var(--signal); font-size: 14px; }
+  .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 8px; }
+  .nav-row .btn { margin-top: 0; }
+  .btn.light { background: var(--bone); color: var(--void); }
+  .btn.light:hover { box-shadow: 0 10px 40px rgba(241, 239, 236, 0.2); }
+  .summary { margin-top: 22px; padding: 18px 20px; border-radius: 14px; background: var(--fill); border: 1px solid var(--line); font-size: 14px; line-height: 1.7; color: var(--dim); white-space: pre-wrap; }
+  .summary b { color: var(--bone); font-weight: 500; }
+
+  footer { border-top: 1px solid var(--line); padding: 9vh 6vw 6vh; }
+  footer .cols { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 5vw; }
+  footer .brand { font-family: var(--display); font-weight: 700; font-size: 15px; }
+  footer h4 { font-size: 13px; color: var(--mute); font-weight: 500; margin-bottom: 16px; }
+  footer a { display: block; color: var(--dim); text-decoration: none; font-size: 14px; margin-bottom: 10px; }
+  footer a:hover { color: var(--bone); }
+  footer .fine { max-width: 1200px; margin: 8vh auto 0; font-size: 13px; color: var(--mute); line-height: 1.8; }
+  footer .fine b { color: var(--bone); font-weight: 500; }
+  @media (max-width: 800px) { footer .cols { grid-template-columns: 1fr 1fr; } }
+
+  #themeBtn {
+    position: fixed; z-index: 90; right: 14px; top: calc(env(safe-area-inset-top, 0px) + 12px);
+    width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
+    color: var(--bone); font-size: 18px; line-height: 1; cursor: pointer; padding: 0;
+    transition: border-color 0.25s ease, transform 0.25s ease;
+  }
+  #themeBtn:hover { border-color: var(--signal); transform: rotate(18deg); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<nav id="nav" class="glass" aria-label="Primary">
+  <a class="mark" href="#top">GDG // NSUT</a>
+  <div class="links">
+    <a href="#societies">Societies</a>
+    <a href="#quiz">Find yours</a>
+    <a href="#process">Process</a>
+  </div>
+  <a class="btn" href="#apply">Apply</a>
+</nav>
+
+<button id="themeBtn" class="glass" type="button" aria-label="Switch to light mode"><span aria-hidden="true">☀</span></button>
+
+<div id="top"></div>
+<div id="track">
+  <div id="stage">
+    <div id="glow"></div>
+    <canvas id="gl" aria-hidden="true"></canvas>
+    <div id="nogl" hidden><p>The 3D scene needs WebGL, which isn't available here. The rest of the page still works.</p></div>
+
+    <div class="caption cap-center" data-in="-0.1" data-hold="0.02" data-out="0.11">
+      <h1>GDG //<br>SOCIETY OS</h1>
+      <p>Six societies are recruiting at NSUT. Scroll to boot it up.</p>
+    </div>
+
+    <div class="caption cap-left" data-in="0.13" data-hold="0.2" data-out="0.29">
+      <h2>Six societies.<br>One campus.</h2>
+      <p>Each society is a module. Together they run campus culture.</p>
+    </div>
+
+    <div class="caption cap-right" data-in="0.7" data-hold="0.75" data-out="0.84">
+      <h2>Not sure<br>where you fit?</h2>
+      <p>Answer three questions and we'll match you to a society.</p>
+      <a class="btn" href="#quiz">Take the quiz</a>
+    </div>
+
+    <div class="caption cap-bottom" data-in="0.88" data-hold="0.95" data-out="1.2">
+      <h2>Applications are open.</h2>
+      <p>Build something that ships.</p>
+      <a class="btn" href="#apply">Apply now</a>
+    </div>
+
+    <div id="hud" class="glass" aria-live="polite">
+      <div class="row"><h3 id="hudT">Web</h3><span class="count" id="hudN">01 / 06</span></div>
+      <p id="hudD"></p>
+      <div id="ticks"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <div id="cue">Scroll</div>
+  </div>
+</div>
+
+<main>
+  <section id="manifesto">
+    <div class="wrap">
+      <p class="big" id="manifestoText">Most clubs ask what you have done. We ask what you will build next. Pick a society, join its people, and make something real.</p>
+    </div>
+  </section>
+
+  <section id="societies">
+    <div class="wrap">
+      <h2 class="sec-title">Explore the societies.</h2>
+      <div class="filters" id="filters" role="group" aria-label="Filter societies"></div>
+      <div class="soc-grid" id="socGrid"></div>
+    </div>
+  </section>
+
+  <section id="process">
+    <div class="wrap">
+      <h2 class="sec-title">How selection works.</h2>
+      <div class="steps glass">
+        <div class="step"><span class="n">01</span><h3>Apply</h3><p>Fill in the short form. Pick up to three societies.</p></div>
+        <div class="step"><span class="n">02</span><h3>Find yours</h3><p>Take the quiz if you're undecided.</p></div>
+        <div class="step"><span class="n">03</span><h3>Society task</h3><p>A small challenge set by the society's leads.</p></div>
+        <div class="step"><span class="n">04</span><h3>Conversation</h3><p>A short chat about what you built and why.</p></div>
+        <div class="step"><span class="n">05</span><h3>Onboard</h3><p>Meet your team and pick your first project.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="quiz">
+    <div class="wrap">
+      <div class="quiz-grid">
+        <div>
+          <h2 class="sec-title">Find yours.</h2>
+          <p class="lead">Three questions, no wrong answers. The result is a starting point, not a commitment.</p>
+        </div>
+        <div id="quiz-box" class="glass" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="apply">
+    <div class="wrap">
+      <div class="app-head">
+        <h2 class="sec-title">Apply to a society.</h2>
+        <p class="kick">Application // GDG-2026</p>
+        <div class="bars" id="bars"><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div id="form" class="glass" aria-live="polite"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="cols">
+    <div>
+      <span class="brand">GDG // SOCIETY OS</span>
+      <p class="lead" style="font-size:14px;margin-top:14px">A student-run developer community at NSUT.</p>
+    </div>
+    <div><h4>Explore</h4><a href="#societies">Societies</a><a href="#quiz">Find yours</a><a href="#process">Process</a></div>
+    <div><h4>Community</h4><a href="#">About</a><a href="#">Events</a><a href="#">Projects</a></div>
+    <div><h4>Contact</h4><a href="#">Email</a><a href="#">Instagram</a><a href="#">GitHub</a></div>
+  </div>
+  <p class="fine">© 2026 GDG NSUT. Built by students.<br>Made by – <b>Kaushal Kumara</b><br>Roll no – <b>2026UGI7202</b></p>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  /* ═══ EDIT ME ═══ */
+  var SUBMIT_URL = ""; // optional: endpoint that accepts a JSON POST (Apps Script, Formspree, your API)
+  var MAXSOC = 3;
+  var TRACKS = [
+    { id: "gdg",       icon: "◆", cat: "Technical", name: "GDG on Campus",  full: "GDG on Campus — NSUT",       tag: "Where broken code becomes better thinking.", desc: "Where broken code becomes better thinking.",
+      roles: ["Web Developer", "Android / Flutter Developer", "Cloud & DevOps", "UI/UX Designer", "Open Source Lead"] },
+    { id: "robotics",  icon: "⬢", cat: "Technical", name: "Robotics & AI",  full: "Robotics & AI Society",      tag: "Machines that argue back.",                  desc: "Machines that argue back.",
+      roles: ["Embedded Engineer", "ML Engineer", "Mechanical Designer", "Research Lead"] },
+    { id: "kalakriti", icon: "▲", cat: "Cultural",  name: "Kalakriti",      full: "Kalakriti — Fine Arts Society", tag: "Colour is an argument.",                  desc: "Colour is an argument.",
+      roles: ["Illustrator", "Digital Artist", "Exhibition Curator", "Mural Lead"] },
+    { id: "euphony",   icon: "♪", cat: "Cultural",  name: "Euphony",        full: "Euphony — Music Society",    tag: "Rehearsal is the real performance.",         desc: "Rehearsal is the real performance.",
+      roles: ["Vocalist", "Instrumentalist", "Sound Engineer", "Event Producer"] },
+    { id: "sports",    icon: "●", cat: "Sports",    name: "Sports Council", full: "Sports Council — NSUT",      tag: "The scoreboard doesn't lie.",                desc: "The scoreboard doesn't lie.",
+      roles: ["Team Coordinator", "Fitness Trainer", "Event Manager", "Performance Analyst"] },
+    { id: "words",     icon: "§", cat: "Literary",  name: "Wordsmiths",     full: "Wordsmiths — Literary Society", tag: "Argue about why your idea is better.",    desc: "Argue about why your idea is better.",
+      roles: ["Writer", "Editor", "Debater", "Content Lead"] }
+  ];
+  var QUIZ = [
+    { q: "A free evening. You'd rather…", o: [
+      ["Build or debug something", { gdg: 2 }],
+      ["Tinker with a robot or a model", { robotics: 2 }],
+      ["Sketch, paint or design", { kalakriti: 2 }],
+      ["Play or write some music", { euphony: 2 }] ] },
+    { q: "Which weekend sounds best?", o: [
+      ["A hackathon", { gdg: 1, robotics: 1 }],
+      ["A match or a tournament", { sports: 2 }],
+      ["An open mic or poetry night", { words: 1, euphony: 1 }],
+      ["A gallery walk", { kalakriti: 2 }] ] },
+    { q: "How do you like to work?", o: [
+      ["Arguing ideas until they get better", { words: 2 }],
+      ["On a team with a scoreboard", { sports: 2 }],
+      ["Alone until it's done", { robotics: 1, kalakriti: 1 }],
+      ["Pairing and reviewing code", { gdg: 2 }] ] }
+  ];
+
+  var clamp = function (x, a, b) { a = a === undefined ? 0 : a; b = b === undefined ? 1 : b; return Math.min(b, Math.max(a, x)); };
+  var sstep = function (a, b, x) { x = clamp((x - a) / (b - a)); return x * x * (3 - 2 * x); };
+  var lerp = function (a, b, t) { return a + (b - a) * t; };
+  var $ = function (s) { return document.querySelector(s); };
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ═══ shared scroll state ═══ */
+  var track = $("#track");
+  function getP() {
+    var r = track.getBoundingClientRect();
+    var max = r.height - window.innerHeight;
+    return max > 0 ? clamp(-r.top / max) : 0;
+  }
+  function ringState(p) {
+    var w = sstep(0.30, 0.37, p) * (1 - sstep(0.68, 0.74, p));
+    var t = clamp((p - 0.32) / 0.36);
+    var kf = t * 5, base = Math.floor(kf), fr = kf - base;
+    var snapped = Math.min(5, base + sstep(0.25, 0.75, fr));
+    return { w: w, snapped: snapped };
+  }
+
+  /* ═══ DOM bits ═══ */
+  var captions = Array.prototype.slice.call(document.querySelectorAll(".caption"));
+  var hud = $("#hud"), hudT = $("#hudT"), hudN = $("#hudN"), hudD = $("#hudD");
+  var ticks = Array.prototype.slice.call(document.querySelectorAll("#ticks i"));
+  var cue = $("#cue"), nav = $("#nav"), glow = $("#glow");
+  var hudIdx = -1;
+
+  function updateCaptions(p) {
+    captions.forEach(function (el) {
+      var tIn = +el.dataset["in"], tHold = +el.dataset.hold, tOut = +el.dataset.out;
+      var rise = Math.max((tHold - tIn) * 0.4, 0.008);
+      var fall = Math.max((tOut - tHold) * 0.6, 0.008);
+      var o = 0;
+      if (p >= tIn && p <= tOut) o = clamp(Math.min((p - tIn) / rise, 1) * Math.min((tOut - p) / fall, 1));
+      el.style.opacity = o.toFixed(3);
+      el.style.visibility = o < 0.01 ? "hidden" : "visible";
+      el.style.setProperty("--d", ((p - tHold) * -40).toFixed(1) + "px");
+    });
+    cue.style.opacity = p < 0.015 ? 1 : 0;
+  }
+
+  function updateHud(p) {
+    var rs = ringState(p);
+    hud.style.opacity = rs.w.toFixed(3);
+    hud.style.visibility = rs.w < 0.02 ? "hidden" : "visible";
+    var idx = clamp(Math.round(rs.snapped), 0, 5);
+    if (idx !== hudIdx) {
+      hudIdx = idx;
+      hudT.textContent = TRACKS[idx].name;
+      hudD.textContent = TRACKS[idx].desc;
+      hudN.textContent = "0" + (idx + 1) + " / 06";
+      ticks.forEach(function (t, i) { t.classList.toggle("on", i <= idx); });
+    }
+  }
+
+  /* ═══ 3D scene ═══ */
+  var gl = null;
+  function initGL() {
+    var canvas = $("#gl");
+    var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setClearColor(0x000000, 0);
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+    var key = new THREE.DirectionalLight(0xffffff, 0.8); key.position.set(4, 5, 6); scene.add(key);
+    var coreLight = new THREE.PointLight(0xff2b2b, 2, 12); scene.add(coreLight);
+
+    // core
+    var core = new THREE.Group(); scene.add(core);
+    var sphereMat = new THREE.MeshStandardMaterial({ color: 0x140000, emissive: 0xff2b2b, emissiveIntensity: 0.8, roughness: 0.35, metalness: 0.2 });
+    var sphere = new THREE.Mesh(new THREE.SphereGeometry(0.5, 48, 48), sphereMat);
+    var wireMat = new THREE.MeshBasicMaterial({ color: 0xff4040, wireframe: true, transparent: true, opacity: 0.5 });
+    var wire = new THREE.Mesh(new THREE.IcosahedronGeometry(0.78, 1), wireMat);
+    core.add(sphere, wire);
+    var rings = [[0.92, 0xffffff, 0.5, 0.4, 0.1], [1.05, 0xff2b2b, 0.7, 1.2, 0.5], [1.75, 0xffffff, 0.3, 0.9, 1.1]].map(function (r, i) {
+      var m = new THREE.Mesh(new THREE.TorusGeometry(r[0], 0.006, 8, 180), new THREE.MeshBasicMaterial({ color: r[1], transparent: true, opacity: r[2] }));
+      m.rotation.x = r[3]; m.rotation.y = r[4]; m.userData.speed = 0.25 + i * 0.18;
+      core.add(m); return m;
+    });
+
+    // panels
+    var panelsGroup = new THREE.Group(); scene.add(panelsGroup);
+    var S = 2.4, R = 3.6;
+    var Z = new THREE.Vector3(0, 0, 1);
+    var N = [[0, 0, 1], [1, 0, 0], [0, 0, -1], [-1, 0, 0], [0, 1, 0], [0, -1, 0]].map(function (a) { return new THREE.Vector3(a[0], a[1], a[2]); });
+    var maxAniso = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+
+    var darkMode = true;
+    function drawCard(cv, t, i) {
+      var c = cv.getContext("2d"), W = cv.width;
+      c.clearRect(0, 0, W, W);
+      c.fillStyle = darkMode ? "rgba(12,12,14,0.92)" : "rgba(233,232,229,0.96)"; c.fillRect(0, 0, W, W);
+      var g = c.createLinearGradient(0, 0, W, W);
+      if (darkMode) { g.addColorStop(0, "rgba(255,255,255,0.14)"); g.addColorStop(0.5, "rgba(255,255,255,0.02)"); g.addColorStop(1, "rgba(255,43,43,0.18)"); }
+      else { g.addColorStop(0, "rgba(255,255,255,0.75)"); g.addColorStop(0.5, "rgba(255,255,255,0.1)"); g.addColorStop(1, "rgba(225,29,29,0.12)"); }
+      c.fillStyle = g; c.fillRect(0, 0, W, W);
+      c.strokeStyle = darkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)"; c.lineWidth = 1;
+      for (var k = 64; k < W; k += 64) { c.beginPath(); c.moveTo(k, 0); c.lineTo(k, W); c.moveTo(0, k); c.lineTo(W, k); c.stroke(); }
+      c.textBaseline = "top"; c.fillStyle = "#ff2b2b"; c.font = '500 26px "Unbounded", Arial, sans-serif';
+      c.fillText("0" + (i + 1), 40, 40);
+      var size = 58;
+      c.font = "700 " + size + 'px "Unbounded", "Arial Black", sans-serif';
+      while (c.measureText(t.name).width > W - 80 && size > 28) { size -= 2; c.font = "700 " + size + 'px "Unbounded", "Arial Black", sans-serif'; }
+      c.textBaseline = "alphabetic"; c.fillStyle = darkMode ? "#f1efec" : "#121212"; c.fillText(t.name, 40, W - 110);
+      c.font = '400 24px "Instrument Sans", system-ui, sans-serif'; c.fillStyle = darkMode ? "rgba(241,239,236,0.6)" : "rgba(18,18,18,0.62)";
+      var tz = 24; while (c.measureText(t.tag).width > W - 80 && tz > 14) { tz--; c.font = "400 " + tz + 'px "Instrument Sans", system-ui, sans-serif'; }
+      c.fillText(t.tag, 40, W - 60);
+    }
+
+    var items = TRACKS.map(function (t, i) {
+      var cv = document.createElement("canvas"); cv.width = cv.height = 512;
+      drawCard(cv, t, i);
+      var tex = new THREE.CanvasTexture(cv); tex.anisotropy = maxAniso;
+      var g = new THREE.Group();
+      var front = new THREE.Mesh(new THREE.PlaneGeometry(S, S), new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.FrontSide }));
+      var back = new THREE.Mesh(new THREE.PlaneGeometry(S, S), new THREE.MeshBasicMaterial({ color: 0x0b0b0d, transparent: true, opacity: 0.88, side: THREE.BackSide }));
+      var edge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(S, S)), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35 }));
+      g.add(front, back, edge);
+      panelsGroup.add(g);
+      return { g: g, front: front, back: back, edge: edge, tex: tex, cv: cv, qA: new THREE.Quaternion().setFromUnitVectors(Z, N[i]), t: t, i: i };
+    });
+
+    function repaint() { items.forEach(function (it) { drawCard(it.cv, it.t, it.i); it.tex.needsUpdate = true; }); }
+    if (document.fonts && document.fonts.load) {
+      Promise.all([document.fonts.load('700 58px "Unbounded"'), document.fonts.load('500 26px "Unbounded"'), document.fonts.load('400 24px "Instrument Sans"')]).then(repaint, repaint);
+    }
+
+    // particles
+    function points(n, color, size) {
+      var geo = new THREE.BufferGeometry(), a = new Float32Array(n * 3);
+      for (var i = 0; i < n; i++) {
+        var r = 6 + Math.random() * 14, th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1);
+        a[i * 3] = r * Math.sin(ph) * Math.cos(th); a[i * 3 + 1] = r * Math.cos(ph) * 0.7; a[i * 3 + 2] = r * Math.sin(ph) * Math.sin(th) - 2;
+      }
+      geo.setAttribute("position", new THREE.BufferAttribute(a, 3));
+      var p = new THREE.Points(geo, new THREE.PointsMaterial({ color: color, size: size, transparent: true, opacity: 0.7, sizeAttenuation: true, depthWrite: false }));
+      scene.add(p); return p;
+    }
+    var dust = points(500, 0xffffff, 0.035), embers = points(80, 0xff2b2b, 0.06), edgeBase = 1;
+
+    function resize() {
+      var w = canvas.clientWidth, h = canvas.clientHeight;
+      if (!w || !h) return;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h; camera.updateProjectionMatrix();
+    }
+    window.addEventListener("resize", resize); resize();
+
+    var mx = 0, my = 0, cx = 0, cy = 0;
+    window.addEventListener("pointermove", function (e) {
+      if (e.pointerType === "touch") return;
+      mx = (e.clientX / window.innerWidth - 0.5) * 2; my = (e.clientY / window.innerHeight - 0.5) * 2;
+    }, { passive: true });
+
+    var posA = new THREE.Vector3(), posC = new THREE.Vector3(), nC = new THREE.Vector3(), qC = new THREE.Quaternion();
+    var time = 0;
+
+    return {
+      setTheme: function (d) { darkMode = d; repaint(); items.forEach(function (it) { it.back.material.color.set(d ? 0x0b0b0d : 0xe9e8e5); }); edgeBase = d ? 1 : 0.1; dust.material.color.set(d ? 0xffffff : 0x222222); },
+      render: function (p, dt) {
+        if (!reduce) time += dt;
+        var e = sstep(0.10, 0.28, p) * (1 - sstep(0.86, 0.98, p));
+        var rs = ringState(p), w = rs.w;
+        var ringAngle = Math.PI / 2 - rs.snapped * Math.PI / 3;
+        var en = Math.min(1, 0.25 + 0.6 * sstep(0.62, 0.72, p) * (1 - sstep(0.82, 0.88, p)) + 0.55 * sstep(0.9, 0.98, p));
+
+        // panels
+        items.forEach(function (it, i) {
+          var ang = i * Math.PI / 3 + ringAngle;
+          posA.copy(N[i]).multiplyScalar(1.22 + e * 2.1);
+          posC.set(Math.cos(ang) * R, 0, Math.sin(ang) * R);
+          it.g.position.lerpVectors(posA, posC, w);
+          nC.set(Math.cos(ang), 0, Math.sin(ang)); qC.setFromUnitVectors(Z, nC);
+          it.g.quaternion.copy(it.qA).slerp(qC, w);
+          it.g.scale.setScalar(1 - 0.12 * e + 0.05 * w);
+          var d = ((ang - Math.PI / 2 + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+          var act = Math.max(0, 1 - Math.abs(d) / (Math.PI / 3));
+          it.front.material.color.setScalar(1 - w * (1 - act) * 0.55);
+          var a = act * w, tint = lerp(edgeBase, 0.17, a);
+          it.edge.material.color.setRGB(lerp(edgeBase, 1, a), tint, tint);
+          it.edge.material.opacity = 0.35 + 0.6 * act * w;
+        });
+        var spin = time * 0.18 + p * Math.PI * 2.4;
+        panelsGroup.rotation.y = spin * (1 - w);
+        panelsGroup.rotation.x = 0.28 * (1 - w);
+
+        // core
+        var s = 1 + 0.18 * en;
+        core.scale.setScalar(s);
+        sphereMat.emissiveIntensity = 0.6 + 2.2 * en;
+        coreLight.intensity = 1.5 + 5 * en;
+        wireMat.opacity = 0.35 + 0.4 * en;
+        wire.rotation.y += dt * (0.3 + en); wire.rotation.x += dt * 0.15;
+        rings.forEach(function (r, i) { r.rotation.z += dt * r.userData.speed * (0.4 + 2.2 * en) * (i % 2 ? -1 : 1); });
+        glow.style.opacity = (0.15 + 0.6 * en).toFixed(3);
+
+        // atmosphere
+        dust.rotation.y = time * 0.01 + p * 0.5; embers.rotation.y = -time * 0.02 - p * 0.8;
+
+        // camera
+        var aspect = camera.aspect, mob = aspect < 1 ? 1.5 : 1;
+        var z = lerp(8.2 + 1.6 * e, 8.6, w) * mob;
+        cx += (mx * 0.6 - cx) * 0.05; cy += (my * 0.35 - cy) * 0.05;
+        camera.position.set(cx, -cy + 0.4 * (1 - w), z);
+        camera.lookAt(0, 0, 0);
+        renderer.render(scene, camera);
+      }
+    };
+  }
+
+  if (window.THREE) {
+    try { gl = initGL(); } catch (err) { gl = null; $("#nogl").hidden = false; }
+  } else {
+    $("#nogl").hidden = false;
+  }
+
+  /* ═══ theme ═══ */
+  var root = document.documentElement, themeBtn = $("#themeBtn");
+  function isDark() {
+    var t = root.getAttribute("data-theme");
+    if (t) return t === "dark";
+    return !(window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches);
+  }
+  function syncTheme() {
+    var d = isDark();
+    themeBtn.firstElementChild.textContent = d ? "☀" : "☾";
+    themeBtn.setAttribute("aria-label", d ? "Switch to light mode" : "Switch to dark mode");
+    if (gl) gl.setTheme(d);
+  }
+  themeBtn.addEventListener("click", function () {
+    var n = isDark() ? "light" : "dark";
+    root.setAttribute("data-theme", n);
+    try { localStorage.setItem("gdg-theme", n); } catch (err) {}
+    syncTheme();
+  });
+  if (window.matchMedia) {
+    var mq = window.matchMedia("(prefers-color-scheme: light)");
+    var onMq = function () { if (!root.getAttribute("data-theme")) syncTheme(); };
+    if (mq.addEventListener) mq.addEventListener("change", onMq); else if (mq.addListener) mq.addListener(onMq);
+  }
+  syncTheme();
+
+  /* ═══ main loop ═══ */
+  var sm = getP(), last = performance.now();
+  function frame(now) {
+    var dt = Math.min((now - last) / 1000, 0.1) || 0.016; last = now;
+    var p = getP();
+    sm += (p - sm) * (reduce ? 1 : 1 - Math.exp(-dt * 8));
+    updateCaptions(sm);
+    updateHud(sm);
+    var r = track.getBoundingClientRect();
+    nav.classList.toggle("on", r.bottom <= window.innerHeight * 1.02);
+    if (gl && r.bottom > -50) gl.render(sm, dt);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* ═══ brand page ═══ */
+  // ───── societies grid ─────
+  var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
+  var byId = function (id) { return TRACKS.filter(function (t) { return t.id === id; })[0]; };
+  var cats = ["All", "Technical", "Cultural", "Sports", "Literary"], curCat = "All";
+  var filtersEl = $("#filters"), gridEl = $("#socGrid");
+
+  function renderFilters() {
+    filtersEl.innerHTML = cats.map(function (c) {
+      return '<button type="button" class="chip' + (c === curCat ? " on" : "") + '" data-c="' + c + '" aria-pressed="' + (c === curCat) + '">' + c + "</button>";
+    }).join("");
+  }
+  function renderGrid() {
+    gridEl.innerHTML = TRACKS.map(function (s, i) {
+      if (curCat !== "All" && s.cat !== curCat) return "";
+      return '<article class="soc glass" data-id="' + s.id + '">' +
+        '<div class="top"><span class="ico" aria-hidden="true">' + s.icon + '</span><span class="idx">0' + (i + 1) + " / 06</span></div>" +
+        '<p class="cat">' + s.cat + "</p><h3>" + esc(s.full) + '</h3><p class="tag">' + esc(s.tag) + "</p>" +
+        '<div class="more"><ul class="roles">' + s.roles.map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + "</ul>" +
+        '<button type="button" class="btn apply-soc" data-id="' + s.id + '">Apply to this society</button></div>' +
+        '<div class="foot"><span class="open-n">' + s.roles.length + ' open roles</span>' +
+        '<button type="button" class="explore" aria-expanded="false">Explore <span aria-hidden="true">→</span></button></div></article>';
+    }).join("");
+  }
+  filtersEl.addEventListener("click", function (e) {
+    var b = e.target.closest(".chip"); if (!b) return;
+    curCat = b.dataset.c; renderFilters(); renderGrid();
+  });
+  gridEl.addEventListener("click", function (e) {
+    var ap = e.target.closest(".apply-soc");
+    if (ap) { openApply(ap.dataset.id); return; }
+    var card = e.target.closest(".soc"); if (!card) return;
+    var open = card.classList.toggle("open");
+    var ex = card.querySelector(".explore");
+    ex.setAttribute("aria-expanded", open);
+    ex.innerHTML = (open ? "Close" : "Explore") + ' <span aria-hidden="true">' + (open ? "×" : "→") + "</span>";
+  });
+  gridEl.addEventListener("pointermove", function (e) {
+    var card = e.target.closest(".soc"); if (!card) return;
+    var r = card.getBoundingClientRect();
+    card.style.setProperty("--mx", (e.clientX - r.left) + "px");
+    card.style.setProperty("--my", (e.clientY - r.top) + "px");
+  });
+  renderFilters(); renderGrid();
+
+  // ───── manifesto ─────
+  var mt = $("#manifestoText");
+  var words = mt.textContent.trim().split(/\s+/);
+  mt.innerHTML = words.map(function (w) { return '<span class="w">' + w + "</span>"; }).join(" ");
+  var wEls = Array.prototype.slice.call(mt.querySelectorAll(".w"));
+  function lightWords() {
+    var r = mt.getBoundingClientRect(), vh = window.innerHeight;
+    var prog = clamp((vh * 0.85 - r.top) / (vh * 0.55 + r.height * 0.5));
+    var n = Math.round(prog * wEls.length);
+    wEls.forEach(function (el, i) { el.classList.toggle("lit", i < n); });
+  }
+  window.addEventListener("scroll", lightWords, { passive: true }); lightWords();
+
+  // ───── quiz ─────
+  var box = $("#quiz-box"), qi = 0, score = {};
+  function renderQuiz() {
+    if (qi < QUIZ.length) {
+      var q = QUIZ[qi];
+      box.innerHTML = '<span class="prog">Question ' + (qi + 1) + " of " + QUIZ.length + "</span><h3>" + q.q + '</h3><div class="opts">' +
+        q.o.map(function (o, i) { return '<button class="opt" type="button" data-i="' + i + '">' + o[0] + "</button>"; }).join("") + "</div>";
+    } else {
+      var best = TRACKS[0], top = -1;
+      TRACKS.forEach(function (t) { var sc = score[t.id] || 0; if (sc > top) { top = sc; best = t; } });
+      box.innerHTML = '<span class="prog">Your match</span><div class="res-name">' + esc(best.name) + '</div><p class="lead">' + esc(best.tag) +
+        '</p><div style="flex:1"></div><div class="res-actions"><button class="btn" type="button" id="applyRes">Apply to ' + esc(best.name) + '</button><button class="btn ghost" type="button" id="retake">Retake</button></div>';
+      $("#applyRes").addEventListener("click", function () { openApply(best.id); });
+      $("#retake").addEventListener("click", function () { qi = 0; score = {}; renderQuiz(); });
+    }
+  }
+  box.addEventListener("click", function (e) {
+    var b = e.target.closest(".opt"); if (!b) return;
+    var pts = QUIZ[qi].o[+b.dataset.i][1];
+    Object.keys(pts).forEach(function (k) { score[k] = (score[k] || 0) + pts[k]; });
+    qi++; renderQuiz();
+  });
+  renderQuiz();
+
+  // ───── application flow ─────
+  var fEl = $("#form"), bars = Array.prototype.slice.call(document.querySelectorAll("#bars i"));
+  var blank = function () { return { name: "", email: "", year: "1st Year", branch: "", picks: [], roles: {}, story: "" }; };
+  var form = { step: 0, done: false, sending: false, err: "", d: blank() };
+
+  function field(id, label, control) { return '<div class="field"><label for="' + id + '">' + label + "</label>" + control + "</div>"; }
+
+  function stepHTML() {
+    var d = form.d, h = "";
+    if (form.step === 0) {
+      h = '<span class="step-n">01 / 04</span><h3>Identity</h3>' +
+        field("f-name", "Name", '<input id="f-name" type="text" autocomplete="name" placeholder="Your full name">') +
+        field("f-email", "Email", '<input id="f-email" type="email" autocomplete="email" placeholder="you@example.com">') +
+        field("f-year", "Year", '<select id="f-year"><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option></select>') +
+        field("f-branch", "Branch", '<input id="f-branch" type="text" placeholder="e.g. Computer Science">');
+    } else if (form.step === 1) {
+      h = '<span class="step-n">02 / 04</span><h3>Societies</h3><p class="hint">Pick up to ' + MAXSOC + '. You can compare them in the list above.</p><div class="picks">' +
+        TRACKS.map(function (t) {
+          return '<button type="button" class="pick" data-id="' + t.id + '" aria-pressed="' + (d.picks.indexOf(t.id) > -1) + '"><span>' + esc(t.full) + "</span><small>" + t.cat + "</small></button>";
+        }).join("") + "</div>";
+    } else if (form.step === 2) {
+      h = '<span class="step-n">03 / 04</span><h3>Roles</h3><p class="hint">Choose the role you want in each society.</p>' +
+        d.picks.map(function (id) {
+          var t = byId(id);
+          return field("r-" + id, esc(t.name), '<select id="r-' + id + '" data-role="' + id + '"><option value="">Choose a role</option>' +
+            t.roles.map(function (r) { return '<option value="' + esc(r) + '">' + esc(r) + "</option>"; }).join("") + '<option value="Not sure yet">Not sure yet</option></select>');
+        }).join("");
+    } else {
+      h = '<span class="step-n">04 / 04</span><h3>Your story</h3>' +
+        field("f-story", "What have you built, made or done that you're proud of?", '<textarea id="f-story" placeholder="A project, a performance, a match, a poem. Anything real."></textarea>');
+    }
+    var last = form.step === 3;
+    return h + '<p class="err" role="alert">' + esc(form.err) + '</p><div class="nav-row">' +
+      (form.step > 0 ? '<button type="button" class="btn ghost" data-act="back">Back</button>' : "<span></span>") +
+      '<button type="button" class="btn light" data-act="next"' + (form.sending ? " disabled" : "") + ">" + (last ? (form.sending ? "Sending…" : "Submit application") : 'Continue <span aria-hidden="true">→</span>') + "</button></div>";
+  }
+
+  function summaryText() {
+    var d = form.d;
+    return "Name: " + d.name + "\nEmail: " + d.email + "\nYear: " + d.year + "\nBranch: " + d.branch + "\n" +
+      d.picks.map(function (id) { return byId(id).name + ": " + d.roles[id]; }).join("\n") + "\n\nStory:\n" + d.story;
+  }
+
+  function renderForm() {
+    bars.forEach(function (b, i) { b.classList.toggle("on", form.done || i <= form.step); });
+    if (form.done) {
+      fEl.innerHTML = '<span class="step-n">Done</span><h3>' + (SUBMIT_URL ? "Application received" : "Application ready") + '</h3><p class="hint">' +
+        (SUBMIT_URL ? "Thanks, " + esc(form.d.name.split(" ")[0]) + ". We'll be in touch." : "Submissions aren't connected yet. Set SUBMIT_URL in the script to send these to your team.") +
+        '</p><div class="summary">' + esc(summaryText()) + '</div><div class="nav-row" style="margin-top:22px"><button type="button" class="btn ghost" data-act="again">Start another</button>' +
+        (SUBMIT_URL ? "" : '<button type="button" class="btn light" data-act="copy">Copy details</button>') + "</div>";
+      return;
+    }
+    fEl.innerHTML = stepHTML();
+    var d = form.d, q = function (s) { return fEl.querySelector(s); };
+    if (form.step === 0) { q("#f-name").value = d.name; q("#f-email").value = d.email; q("#f-year").value = d.year; q("#f-branch").value = d.branch; }
+    if (form.step === 2) { d.picks.forEach(function (id) { q("#r-" + id).value = d.roles[id] || ""; }); }
+    if (form.step === 3) { q("#f-story").value = d.story; }
+  }
+
+  function validate() {
+    var d = form.d;
+    if (form.step === 0) {
+      if (!d.name.trim()) return "Enter your name.";
+      if (!/^\S+@\S+\.\S+$/.test(d.email.trim())) return "Enter a valid email address.";
+      if (!d.branch.trim()) return "Enter your branch.";
+    } else if (form.step === 1) {
+      if (!d.picks.length) return "Pick at least one society.";
+    } else if (form.step === 2) {
+      for (var i = 0; i < d.picks.length; i++) if (!d.roles[d.picks[i]]) return "Choose a role for " + byId(d.picks[i]).name + ".";
+    } else if (d.story.trim().length < 20) return "Write at least a couple of sentences.";
+    return "";
+  }
+
+  function submit() {
+    form.done = true; form.sending = false; form.err = "";
+    renderForm();
+  }
+
+  fEl.addEventListener("input", function (e) {
+    var id = e.target.id, d = form.d, v = e.target.value;
+    if (id === "f-name") d.name = v; else if (id === "f-email") d.email = v; else if (id === "f-branch") d.branch = v;
+    else if (id === "f-story") d.story = v;
+  });
+  fEl.addEventListener("change", function (e) {
+    if (e.target.id === "f-year") form.d.year = e.target.value;
+    if (e.target.dataset.role) form.d.roles[e.target.dataset.role] = e.target.value;
+  });
+  fEl.addEventListener("click", function (e) {
+    var pick = e.target.closest(".pick");
+    if (pick) {
+      var id = pick.dataset.id, i = form.d.picks.indexOf(id);
+      if (i > -1) form.d.picks.splice(i, 1);
+      else if (form.d.picks.length >= MAXSOC) { form.err = "You can pick up to " + MAXSOC + " societies."; renderForm(); return; }
+      else form.d.picks.push(id);
+      form.err = ""; renderForm(); return;
+    }
+    var b = e.target.closest("[data-act]"); if (!b) return;
+    var act = b.dataset.act;
+    if (act === "back") { form.step--; form.err = ""; renderForm(); }
+    else if (act === "next") {
+      form.err = validate();
+      if (form.err) { renderForm(); return; }
+      if (form.step < 3) { form.step++; renderForm(); return; }
+      if (!SUBMIT_URL) { submit(); return; }
+      form.sending = true; renderForm();
+      fetch(SUBMIT_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form.d) })
+        .then(function (r) { if (!r.ok) throw new Error("bad status"); submit(); })
+        .catch(function () { form.sending = false; form.err = "Couldn't send your application. Check your connection and try again."; renderForm(); });
+    }
+    else if (act === "again") { form = { step: 0, done: false, sending: false, err: "", d: blank() }; renderForm(); }
+    else if (act === "copy") { try { navigator.clipboard.writeText(summaryText()); b.textContent = "Copied"; } catch (err) { b.textContent = "Copy failed"; } }
+  });
+
+  function openApply(id) {
+    if (form.done) form = { step: 0, done: false, sending: false, err: "", d: blank() };
+    if (id && form.d.picks.indexOf(id) < 0) { if (form.d.picks.length >= MAXSOC) form.d.picks.pop(); form.d.picks.push(id); }
+    renderForm();
+    $("#apply").scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+  }
+  renderForm();
+})();
+</script>
+</body>
+</html>
